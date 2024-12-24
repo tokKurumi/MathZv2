@@ -1,9 +1,31 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113 d17.12
+VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{1A76A1D7-48BA-4413-AAAB-E43CE0E18B17}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{9AE57AD8-A348-4552-B765-AE46D109F431}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathZv2.AppHost.AppHost", "MathZv2.AppHost\MathZv2.AppHost.AppHost\MathZv2.AppHost.AppHost.csproj", "{4B856858-7E3A-4802-9956-C33B044BF4BC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathZv2.AppHost.ServiceDefaults", "MathZv2.AppHost\MathZv2.AppHost.ServiceDefaults\MathZv2.AppHost.ServiceDefaults.csproj", "{06816DF0-BB34-4F04-A0AE-76EF8BC94951}"
+EndProject
 Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4B856858-7E3A-4802-9956-C33B044BF4BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B856858-7E3A-4802-9956-C33B044BF4BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B856858-7E3A-4802-9956-C33B044BF4BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B856858-7E3A-4802-9956-C33B044BF4BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06816DF0-BB34-4F04-A0AE-76EF8BC94951}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06816DF0-BB34-4F04-A0AE-76EF8BC94951}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06816DF0-BB34-4F04-A0AE-76EF8BC94951}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06816DF0-BB34-4F04-A0AE-76EF8BC94951}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection

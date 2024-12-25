@@ -1,22 +1,27 @@
-using MathZv2.Services.DocumentationScanner;
+using MathZv2.ServiceDefaults;
 using MathZv2.Services.DocumentationScanner.Models;
-using Microsoft.Extensions.Options;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
 
 builder.Services.Configure<NugetConfig>(builder.Configuration.GetSection(nameof(NugetConfig)));
 builder.Services.Configure<DocumentsConfig>(builder.Configuration.GetSection(nameof(DocumentsConfig)));
 
-builder.Services.AddSingleton(resolver => resolver.GetRequiredService<IOptions<NugetConfig>>().Value);
-builder.Services.AddSingleton(resolver => resolver.GetRequiredService<IOptions<DocumentsConfig>>().Value);
-
-builder.AddServiceDefaults();
-
 builder.AddQdrantClient("qdrant");
 builder.AddOllamaSharpEmbeddingGenerator("phi35");
 
-builder.Services.AddHostedService<DocumentationScannerService>();
+builder.Services.AddProblemDetails();
 
-var host = builder.Build();
+//builder.Services.AddHostedService<DocumentationScannerService>();
 
-await host.RunAsync();
+var app = builder.Build();
+
+app.UseExceptionHandler();
+
+app.UseRequestTimeouts();
+app.UseOutputCache();
+
+app.MapDefaultEndpoints();
+
+await app.RunAsync();

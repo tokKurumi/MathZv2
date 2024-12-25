@@ -8,9 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Asp.Versioning.Http" Version="8.1.0" />
+    <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
     <PackageReference Include="Aspire.Qdrant.Client" Version="9.0.0" />
     <PackageReference Include="CommunityToolkit.Aspire.OllamaSharp" Version="9.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="Scalar.AspNetCore" Version="1.2.72" />
   </ItemGroup>
 
   <ItemGroup>

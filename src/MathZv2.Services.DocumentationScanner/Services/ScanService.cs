@@ -1,36 +1,36 @@
-namespace MathZv2.Services.DocumentationScanner;
+﻿namespace MathZv2.Services.DocumentationScanner.Services;
 
 using MathZv2.Services.DocumentationScanner.Models;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
 using System.Diagnostics;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-public class DocumentationScannerService(
-    ILogger<DocumentationScannerService> logger,
+public class ScanService(
+    ILogger<ScanService> logger,
     QdrantClient qdrantClient,
     IOptions<NugetConfig> nugetConfig,
     IOptions<DocumentsConfig> documentsConfig,
-    IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator
-    ) : BackgroundService
+    IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator)
+    : IScanService
 {
     private const string COLLECTION_NAME = "documents";
 
-    private readonly ILogger<DocumentationScannerService> _logger = logger;
+    private readonly ILogger<ScanService> _logger = logger;
     private readonly QdrantClient _qdrantClient = qdrantClient;
     private readonly IOptions<NugetConfig> _nugetConfig = nugetConfig;
     private readonly IOptions<DocumentsConfig> _documentsConfig = documentsConfig;
     private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddingGenerator = embeddingGenerator;
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public async Task ScanAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Starting ExecuteAsync method.");
 
-        await EnsureQdrantCollectionAsync(COLLECTION_NAME, stoppingToken);
+        await EnsureQdrantCollectionAsync(COLLECTION_NAME, cancellationToken);
 
         foreach (var documentDefinition in _documentsConfig.Value.DocumentationDefinitions)
         {
@@ -49,11 +49,11 @@ public class DocumentationScannerService(
             _logger.LogInformation("Found {FileCount} XML files in path: {PathToScan}", allXmlFiles.Length, pathToScan);
 
             var members = allXmlFiles.SelectMany(GetMemberElements).ToList();
-            var points = await GenerateEmbeddingsPointsAsync(members, stoppingToken);
+            var points = await GenerateEmbeddingsPointsAsync(members, cancellationToken);
 
             _logger.LogInformation("Generated {PointCount} embedding points.", points.Count);
 
-            await _qdrantClient.UpsertAsync(COLLECTION_NAME, points, cancellationToken: stoppingToken);
+            await _qdrantClient.UpsertAsync(COLLECTION_NAME, points, cancellationToken: cancellationToken);
 
             _logger.LogInformation("Upserted points to Qdrant collection: {CollectionName}", COLLECTION_NAME);
         }

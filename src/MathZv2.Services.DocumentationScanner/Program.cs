@@ -2,12 +2,15 @@ using Asp.Versioning;
 using MathZv2.ServiceDefaults;
 using MathZv2.Services.DocumentationScanner.Models;
 using MathZv2.Services.DocumentationScanner.Services;
+using MathZv2.Services.DocumentationScanner.Services.IServices;
+using Microsoft.AspNetCore.Mvc;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
+builder.Services.AddCors();
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddApiVersioning(settings =>
@@ -29,9 +32,20 @@ builder.Services.Configure<DocumentsConfig>(builder.Configuration.GetSection(nam
 builder.AddQdrantClient("qdrant");
 builder.AddOllamaSharpEmbeddingGenerator("phi35");
 
-builder.Services.AddScoped<IScanService, ScanService>();
+builder.Services.AddScoped<IScanDocumentsService, ScanDocumentsService>();
+builder.Services.AddScoped<IRagSearchService, RagSearchService>();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors(settings =>
+    {
+        settings.AllowAnyHeader();
+        settings.AllowAnyMethod();
+        settings.AllowAnyOrigin();
+    });
+}
 
 app.MapOpenApi();
 app.MapScalarApiReference();
@@ -49,10 +63,21 @@ var versionSet = app.NewApiVersionSet()
 
 var api = app.MapGroup("api/v{version:apiVersion}").WithApiVersionSet(versionSet);
 
-api.MapPost("scan", async (IScanService scanService, CancellationToken cancellationToken) =>
+api.MapPost("scan", async (IScanDocumentsService scanService, CancellationToken cancellationToken) =>
 {
     await scanService.ScanAsync(cancellationToken);
     return Results.Ok();
+});
+
+api.MapGet("search", async (IRagSearchService ragSearchService, [FromQuery] string query, CancellationToken cancellationToken) =>
+{
+    var results = await ragSearchService.SearchAsync(query, cancellationToken);
+    return Results.Ok(results);
+});
+
+api.MapGet("ping", () =>
+{
+    return Results.Ok("pong");
 });
 
 await app.RunAsync();

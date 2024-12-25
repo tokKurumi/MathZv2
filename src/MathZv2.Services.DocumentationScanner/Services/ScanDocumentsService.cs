@@ -1,6 +1,7 @@
 ﻿namespace MathZv2.Services.DocumentationScanner.Services;
 
 using MathZv2.Services.DocumentationScanner.Models;
+using MathZv2.Services.DocumentationScanner.Services.IServices;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -10,27 +11,25 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-public class ScanService(
-    ILogger<ScanService> logger,
-    QdrantClient qdrantClient,
+public class ScanDocumentsService(
+    ILogger<ScanDocumentsService> logger,
     IOptions<NugetConfig> nugetConfig,
     IOptions<DocumentsConfig> documentsConfig,
-    IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator)
-    : IScanService
+    IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
+    QdrantClient qdrantClient)
+    : IScanDocumentsService
 {
-    private const string COLLECTION_NAME = "documents";
-
-    private readonly ILogger<ScanService> _logger = logger;
-    private readonly QdrantClient _qdrantClient = qdrantClient;
+    private readonly ILogger<ScanDocumentsService> _logger = logger;
     private readonly IOptions<NugetConfig> _nugetConfig = nugetConfig;
     private readonly IOptions<DocumentsConfig> _documentsConfig = documentsConfig;
     private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddingGenerator = embeddingGenerator;
+    private readonly QdrantClient _qdrantClient = qdrantClient;
 
     public async Task ScanAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Starting ExecuteAsync method.");
 
-        await EnsureQdrantCollectionAsync(COLLECTION_NAME, cancellationToken);
+        await EnsureQdrantCollectionAsync(_documentsConfig.Value.CollectionName, cancellationToken);
 
         foreach (var documentDefinition in _documentsConfig.Value.DocumentationDefinitions)
         {
@@ -53,9 +52,9 @@ public class ScanService(
 
             _logger.LogInformation("Generated {PointCount} embedding points.", points.Count);
 
-            await _qdrantClient.UpsertAsync(COLLECTION_NAME, points, cancellationToken: cancellationToken);
+            await _qdrantClient.UpsertAsync(_documentsConfig.Value.CollectionName, points, cancellationToken: cancellationToken);
 
-            _logger.LogInformation("Upserted points to Qdrant collection: {CollectionName}", COLLECTION_NAME);
+            _logger.LogInformation("Upserted points to Qdrant collection: {CollectionName}", _documentsConfig.Value.CollectionName);
         }
 
         _logger.LogInformation("Finished ExecuteAsync method.");
@@ -67,7 +66,7 @@ public class ScanService(
         {
             await _qdrantClient.CreateCollectionAsync(collectionName, new VectorParams()
             {
-                Size = 3072,
+                Size = _documentsConfig.Value.VectorSize,
                 Distance = Distance.Cosine,
             }, cancellationToken: cancellationToken);
         }

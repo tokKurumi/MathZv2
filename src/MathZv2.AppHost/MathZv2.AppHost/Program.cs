@@ -12,7 +12,7 @@ var ollama = builder
     .WithContainerRuntimeArgs("--gpus=all");
 
 var aiModel = ollama
-    .AddModel("rag", "llama3.2");
+    .AddModel("rag", "qwen2-math:7b");
 
 var qdrant = builder.AddQdrant("qdrant")
     .WithDataVolume()

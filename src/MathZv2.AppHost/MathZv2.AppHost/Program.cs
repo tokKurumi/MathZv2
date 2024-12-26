@@ -12,7 +12,7 @@ var ollama = builder
     .WithContainerRuntimeArgs("--gpus=all");
 
 var aiModel = ollama
-    .AddModel("phi35", "phi3.5");
+    .AddModel("rag", "llama3.2");
 
 var qdrant = builder.AddQdrant("qdrant")
     .WithDataVolume()
@@ -30,6 +30,5 @@ builder.AddHealthChecksUI("healthchecksui")
     .WithReference(qdrant)
     .WithReference(scanner)
     .WithExternalHttpEndpoints();
-
 
 builder.Build().Run();

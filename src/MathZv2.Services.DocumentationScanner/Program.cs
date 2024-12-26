@@ -30,7 +30,7 @@ builder.Services.Configure<NugetConfig>(builder.Configuration.GetSection(nameof(
 builder.Services.Configure<DocumentsConfig>(builder.Configuration.GetSection(nameof(DocumentsConfig)));
 
 builder.AddQdrantClient("qdrant");
-builder.AddOllamaSharpEmbeddingGenerator("phi35");
+builder.AddOllamaSharpEmbeddingGenerator("rag");
 
 builder.Services.AddScoped<IScanDocumentsService, ScanDocumentsService>();
 builder.Services.AddScoped<IRagSearchService, RagSearchService>();

@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -48,13 +47,7 @@ public class ScanDocumentsService(
             _logger.LogInformation("Found {FileCount} XML files in path: {PathToScan}", allXmlFiles.Length, pathToScan);
 
             var members = allXmlFiles.SelectMany(GetMemberElements).ToList();
-            var points = await GenerateEmbeddingsPointsAsync(members, cancellationToken);
-
-            _logger.LogInformation("Generated {PointCount} embedding points.", points.Count);
-
-            await _qdrantClient.UpsertAsync(_documentsConfig.Value.CollectionName, points, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Upserted points to Qdrant collection: {CollectionName}", _documentsConfig.Value.CollectionName);
+            await ProcessBatchesAsync(members, cancellationToken);
         }
 
         _logger.LogInformation("Finished ExecuteAsync method.");
@@ -72,22 +65,21 @@ public class ScanDocumentsService(
         }
     }
 
-    private async Task<List<PointStruct>> GenerateEmbeddingsPointsAsync(List<string> members, CancellationToken cancellationToken = default)
+    private async Task ProcessBatchesAsync(List<string> members, CancellationToken cancellationToken)
     {
-        var allPoints = new List<PointStruct>();
         var batchSize = 500;
         var totalBatches = (int)Math.Ceiling((double)members.Count / batchSize);
-        var stopwatch = new Stopwatch();
 
         for (int i = 0; i < members.Count; i += batchSize)
         {
-            stopwatch.Restart();
             var batch = members.GetRange(i, Math.Min(batchSize, members.Count - i));
-            var embeddedResults = await _embeddingGenerator.GenerateAndZipAsync(batch, cancellationToken: cancellationToken);
+            var currentBatch = (i / batchSize) + 1;
 
-            var points = embeddedResults.Select(embedding =>
+            try
             {
-                return new PointStruct()
+                var embeddedResults = await _embeddingGenerator.GenerateAndZipAsync(batch, cancellationToken: cancellationToken);
+
+                var points = embeddedResults.Select(embedding => new PointStruct
                 {
                     Id = Guid.NewGuid(),
                     Vectors = embedding.Embedding.Vector.ToArray(),
@@ -95,17 +87,18 @@ public class ScanDocumentsService(
                     {
                         ["Member"] = embedding.Value,
                     }
-                };
-            }).ToList();
+                }).ToList();
 
-            allPoints.AddRange(points);
-            stopwatch.Stop();
+                await _qdrantClient.UpsertAsync(_documentsConfig.Value.CollectionName, points, cancellationToken: cancellationToken);
 
-            _logger.LogInformation("Processed batch {CurrentBatch}/{TotalBatches} in {ElapsedMilliseconds} ms. {BatchesRemaining} batches remaining.",
-                (i / batchSize) + 1, totalBatches, stopwatch.ElapsedMilliseconds, totalBatches - ((i / batchSize) + 1));
+                _logger.LogInformation("Successfully processed and upserted batch {CurrentBatch}/{TotalBatches}.",
+                    currentBatch, totalBatches);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing batch {CurrentBatch}/{TotalBatches}. Skipping this batch.", currentBatch, totalBatches);
+            }
         }
-
-        return allPoints;
     }
 
     private static List<string> GetMemberElements(string xmlFilePath)
